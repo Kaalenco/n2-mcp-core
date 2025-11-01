@@ -1,5 +1,7 @@
 # N2.McpCore
 
+[![.NET Build and test](https://github.com/Kaalenco/n2-mcp-core/actions/workflows/dotnet.yml/badge.svg)](https://github.com/Kaalenco/n2-mcp-core/actions/workflows/dotnet.yml)
+
 A .NET library providing core abstractions and utilities for implementing [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers. This package enables you to build MCP-compliant servers that can integrate with AI assistants and other MCP clients.
 
 ## Features
