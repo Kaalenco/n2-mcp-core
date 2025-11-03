@@ -32,9 +32,11 @@ public record JsonRpcResponse
     public object? Id { get; set; }
 
     [JsonPropertyName("result")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? Result { get; set; }
 
     [JsonPropertyName("error")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public JsonRpcError? Error { get; set; }
 }
 
@@ -50,6 +52,7 @@ public record JsonRpcError
     public string Message { get; set; } = string.Empty;
 
     [JsonPropertyName("data")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? Data { get; set; }
 }
 

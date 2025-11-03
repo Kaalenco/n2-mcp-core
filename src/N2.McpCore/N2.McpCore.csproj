@@ -19,16 +19,28 @@
 		<RootNamespace>N2.McpCore</RootNamespace>
 		<ProductName>N2 Mcp Core Libraries</ProductName>
 
-		<Version>1.0.0</Version>
-		<ProductVersion>1.0.0</ProductVersion>
-		<PackageVersion>1.0.0</PackageVersion>
+		<Version>1.0.1</Version>
+		<ProductVersion>1.0.1</ProductVersion>
 
+		<!-- Package information -->
 		<PackageId>N2.Mcp.Core</PackageId>
 		<PackageType>Dependency</PackageType>
 		<PackageLicenseExpression>AFL-3.0</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/kaalenco/n2-mcp-core
 		</PackageProjectUrl>
 
+		<!-- Source Link -->
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+
+		<!-- Deterministic builds -->
+		<Deterministic>true</Deterministic>
+		<ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+		<!-- Symbols -->
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<DebugType>portable</DebugType>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -56,8 +68,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
-    <PackageReference Include="System.Text.Json" Version="9.0.9" />
-  </ItemGroup>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.10" />
+		    <PackageReference Include="System.Text.Json" Version="9.0.10" />
+	  </ItemGroup>
 
 </Project>

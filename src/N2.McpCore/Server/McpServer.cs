@@ -16,6 +16,8 @@ public class McpServer : IMcpServer
     private readonly McpServerCapabilities _capabilities;
     private bool _initialized;
 
+    public bool Initialized => _initialized;
+
     public McpServer(McpServerInfo serverInfo, McpServerCapabilities capabilities)
     {
         _serverInfo = serverInfo;
@@ -24,16 +26,17 @@ public class McpServer : IMcpServer
         RegisterDefaultHandlers();
     }
 
-    public static readonly JsonSerializerOptions options = new()
+    public static readonly JsonSerializerOptions Options = new()
     {
         AllowOutOfOrderMetadataProperties = true,
         AllowTrailingCommas = true,
         Converters = {
                 new JsonStringEnumConverter(allowIntegerValues: true),
             },
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         NumberHandling = JsonNumberHandling.AllowReadingFromString,
         PropertyNameCaseInsensitive = true,
-        MaxDepth = 5,
+        MaxDepth = 32,
     };
 
 
@@ -175,7 +178,7 @@ public class McpServer : IMcpServer
     {
         if (params_ is JsonElement element)
         {
-            return JsonSerializer.Deserialize<T>(element, options)
+            return JsonSerializer.Deserialize<T>(element, Options)
                    ?? throw new ArgumentException($"Failed to deserialize parameters to {typeof(T).Name}");
         }
 

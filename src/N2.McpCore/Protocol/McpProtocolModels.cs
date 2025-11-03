@@ -11,9 +11,11 @@ public record McpInitializeParams
     public string ProtocolVersion { get; set; } = "2024-11-05";
 
     [JsonPropertyName("capabilities")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public McpClientCapabilities? Capabilities { get; set; }
 
     [JsonPropertyName("clientInfo")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public McpClientInfo? ClientInfo { get; set; }
 }
 
@@ -35,6 +37,7 @@ public record McpClientInfo
 public record McpClientCapabilities
 {
     [JsonPropertyName("experimental")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, object>? Experimental { get; set; }
 }
 
@@ -59,9 +62,11 @@ public record McpInitializeResult
 public record McpServerCapabilities
 {
     [JsonPropertyName("tools")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public McpToolsCapability? Tools { get; set; } = new();
 
     [JsonPropertyName("experimental")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, object>? Experimental { get; set; }
 }
 
@@ -143,9 +148,11 @@ public record McpPropertyDefinition
     public string Description { get; set; } = string.Empty;
 
     [JsonPropertyName("enum")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string[]? Enum { get; set; }
 
     [JsonPropertyName("default")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? Default { get; set; }
 }
 
@@ -182,6 +189,7 @@ public record McpContent
     public string Text { get; set; } = string.Empty;
 
     [JsonPropertyName("mimeType")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? MimeType { get; set; }
 }
 

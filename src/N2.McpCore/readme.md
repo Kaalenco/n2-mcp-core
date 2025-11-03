@@ -116,7 +116,7 @@ protected override async Task<McpToolCallResult> CallToolAsync(McpToolCallParams
 
 ## Working with Tool Arguments
 
-Tool arguments arrive as `Dictionary<string, object?>` where values may be `JsonElement` or native types. Create helper methods to safely extract typed values:
+Tool arguments arrive as `Dictionary<string, object?>` where values may be `JsonElement` or native types. Use the helper methods to safely extract typed values:
 
 ```csharp
 private static string? GetStringArgument(Dictionary<string, object?> arguments, string key)
@@ -190,7 +190,7 @@ public class YourMcpServer : McpServer
 Register your server in the DI container:
 
 ```csharp
-serviceCollection.AddSingleton<IMcpServer, YourMcpServer>();
+serviceCollection.AddSingleton<YourMcpServer>();
 ```
 
 ## Setting Up stdio Communication
@@ -202,70 +202,9 @@ MCP servers communicate via JSON-RPC 2.0 over standard input/output. Implement a
 4. Logs diagnostic information to `Console.Error`
 
 ```csharp
-private static async Task<int> RunMcpServerAsync(IServiceProvider serviceProvider)
+private static async Task<int> RunMcp(IServiceProvider serviceProvider)
 {
-    var mcpServer = serviceProvider.GetRequiredService<IMcpServer>();
-
-    Console.Error.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] Starting MCP Server");
-    Console.Error.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] Ready to accept requests...");
-
-    try
-    {
-        while (true)
-        {
-            var line = await Console.In.ReadLineAsync();
-            if (line == null) // EOF
-            {
-                Console.Error.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] Shutting down gracefully.");
-                break;
-            }
-
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            try
-            {
-                var request = JsonSerializer.Deserialize<JsonRpcRequest>(line);
-                if (request == null) continue;
-
-                var response = await mcpServer.ProcessRequestAsync(request);
-
-                // Only send response for requests (not notifications)
-                if (request.Id != null)
-                {
-                    var responseJson = JsonSerializer.Serialize(response, new JsonSerializerOptions
-                    {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                    });
-                    await Console.Out.WriteLineAsync(responseJson);
-                    await Console.Out.FlushAsync();
-                }
-            }
-            catch (JsonException)
-            {
-                // Send JSON-RPC parse error response
-                var errorResponse = new JsonRpcResponse
-                {
-                    Id = null,
-                    Error = new JsonRpcError
-                    {
-                        Code = JsonRpcErrorCodes.ParseError,
-                        Message = "Parse error: Invalid JSON"
-                    }
-                };
-                var errorJson = JsonSerializer.Serialize(errorResponse);
-                await Console.Out.WriteLineAsync(errorJson);
-                await Console.Out.FlushAsync();
-            }
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] Fatal error: {ex.Message}");
-        return 1;
-    }
-
-    return 0;
+    serviceProvider.RunMcpServerAsync<YourMcpServer>(Console.In, Console.Out, Console.Error.Writeline);
 }
 ```
 

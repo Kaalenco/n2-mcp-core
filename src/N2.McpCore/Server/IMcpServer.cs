@@ -9,6 +9,11 @@ namespace McpCore.Server;
 public interface IMcpServer
 {
     /// <summary>
+    /// A flag to check if the service has been initialized properly.
+    /// </summary>
+    bool Initialized { get; }
+
+    /// <summary>
     /// Process a JSON-RPC request and return a response
     /// </summary>
     Task<JsonRpcResponse> ProcessRequestAsync(JsonRpcRequest request);
