@@ -4,11 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-N2.McpCore is a .NET library that provides core abstractions and utilities for implementing MCP (Model Context Protocol) servers. This package targets multiple frameworks (netstandard2.0, netstandard2.1, .NET 8.0, and .NET 9.0) to maximize compatibility across different .NET projects.
+N2.McpCore is a .NET library that provides core abstractions and utilities for implementing MCP (Model Context Protocol) servers. The package targets `netstandard2.0`, `netstandard2.1`, `net8.0`, and `net10.0`.
 
 ## Build and Development Commands
 
-### Building the Project
 ```bash
 # Build the solution
 dotnet build src/N2.McpCore.sln
@@ -16,71 +15,63 @@ dotnet build src/N2.McpCore.sln
 # Build for specific configuration
 dotnet build src/N2.McpCore.sln -c Release
 
-# Build for specific framework
-dotnet build src/N2.McpCore.sln -f net9.0
+# Run tests (NUnit, targets net8.0 and net10.0)
+dotnet test src/N2.McpCore.Unittests/N2.McpCore.Unittests.csproj
+
+# Run a single test
+dotnet test src/N2.McpCore.Unittests/N2.McpCore.Unittests.csproj --filter "FullyQualifiedName~TestName"
 ```
 
-### Package Creation
-The project is configured to generate NuGet packages on build (`GeneratePackageOnBuild` is enabled). The package will be created in the `bin` directory after a successful build.
-
-### Testing
-Currently, no test project is present in this repository. When adding tests, they should be placed in a separate test project.
+NuGet packages are generated automatically on build (`GeneratePackageOnBuild` is enabled), output to `bin/`.
 
 ## Architecture Overview
 
 ### Core Components
 
-The codebase is organized into three main layers:
-
 1. **JSON-RPC Layer** (`JsonRpc/`)
-   - Provides JSON-RPC 2.0 protocol implementation
-   - `JsonRpcRequest`, `JsonRpcResponse`, `JsonRpcNotification` - Core message types
-   - `JsonRpcError` and `JsonRpcErrorCodes` - Standardized error handling
-   - All JSON-RPC models follow the JSON-RPC 2.0 specification
+   - `JsonRpcRequest`, `JsonRpcResponse`, `JsonRpcNotification` — core message types
+   - `JsonRpcError` and `JsonRpcErrorCodes` — standardized error handling per JSON-RPC 2.0 spec
 
 2. **MCP Protocol Layer** (`Protocol/`)
-   - Implements the Model Context Protocol (MCP) version "2024-11-05"
-   - `McpInitializeParams` and `McpInitializeResult` - Server initialization handshake
-   - `McpTool`, `McpToolCallParams`, `McpToolCallResult` - Tool definition and execution
-   - `McpServerInfo` and `McpServerCapabilities` - Server metadata and capabilities
-   - `McpMethods` - Standard MCP method name constants (initialize, tools/list, tools/call)
-   - Uses JSON Schema for tool input validation via `McpInputSchema`
+   - Protocol version `"2024-11-05"`
+   - `McpInitializeParams`/`McpInitializeResult` — handshake types
+   - `McpTool`, `McpToolCallParams`, `McpToolCallResult`, `McpContent` — tool definition and execution
+   - `McpServerInfo`, `McpServerCapabilities`, `McpToolsCapability` — server metadata
+   - `McpMethods` — method name constants (`initialize`, `initialized`, `tools/list`, `tools/call`)
+   - `McpInputSchema`, `McpPropertyDefinition` — JSON Schema for tool input validation
 
 3. **Server Implementation** (`Server/`)
-   - `IMcpServer` - Interface defining MCP server functionality
-   - `McpServer` - Base implementation providing:
-     - JSON-RPC request routing to registered method handlers
-     - MCP initialization handshake (initialize → initialized notification → ready)
-     - Tool listing and invocation framework
-     - Error handling and protocol compliance
-   - Derived classes must override `GetAvailableTools()` and `CallToolAsync()` to provide actual tool implementations
+   - `IMcpServer` — interface defining `ProcessRequestAsync`, `InitializeAsync`, `GetToolsListAsync`, `CallToolAsync`
+   - `McpServer` — base class; subclass by overriding `GetAvailableTools()` and `CallToolAsync()`
+   - `McpServerStdIO` — static extension method `RunMcpServerAsync<T>(IServiceProvider, TextReader, TextWriter, Action<string>)` that runs the stdio message loop; resolves the server from DI and handles JSON-RPC framing, EOF, and error responses
+
+4. **Utility Types** (root of `N2.McpCore`)
+   - `DictionaryExtensions` — helpers for extracting typed arguments from `Dictionary<string, object?>` in tool implementations (`GetStringArgument`, `GetBoolArgument`, `GetIntArgument`, `GetArgument<T>`)
+   - `Response` / `Response<T>` — generic operation result wrappers with `Success`, `Message`, `Value`
+   - `VerifyResult` — accumulates validation failures; call `ThrowIfFailed()` to raise on error
+   - `SessionCodeGenerator` / `ISessionCodeGenerator` — generates/validates 6-character alphanumeric session codes
+   - `ToolCallRequest` — lightweight model for tool call name + `JsonElement?` arguments
 
 ### Key Patterns
 
-**Initialization Flow:**
-The MCP server follows a two-phase initialization:
-1. Client sends `initialize` request → Server responds with capabilities
-2. Client sends `initialized` notification → Server marks itself ready (sets `_initialized = true`)
-3. Only after phase 2 can tools be listed or called
+**Initialization Flow (two-phase):**
+1. Client sends `initialize` → server returns capabilities (does NOT set `_initialized`)
+2. Client sends `initialized` notification → server sets `_initialized = true`
+3. `GetToolsListAsync()` and `CallToolAsync()` throw `InvalidOperationException` before phase 2 completes
 
 **Method Handler Registration:**
-`McpServer` uses a dictionary-based dispatcher (`_methodHandlers`) where each MCP method is registered with an async handler function. This allows easy extension by calling `RegisterMethodHandler()`.
-
-**Configuration:**
-`N2ConfigurationExtensions` provides flexible feature flag checking supporting boolean flags, CSV strings, and string arrays from IConfiguration. This is used for runtime feature toggles.
+`McpServer` uses a dictionary dispatcher (`_methodHandlers`). Extend by calling `RegisterMethodHandler(method, handler)` in a constructor or override.
 
 **JSON Serialization:**
-The library defines standardized `JsonSerializerOptions` in `N2ConfigurationExtensions.options` with:
-- Case-insensitive property names
-- Enum string conversion
-- Trailing commas allowed
-- Number reading from strings
-- Max depth of 5
+`McpServer.Options` is the shared `JsonSerializerOptions` used throughout (case-insensitive, enum-as-string, trailing commas, null-ignoring, max depth 32). Pass it explicitly when serializing/deserializing outside of `McpServer`.
 
-## Important Implementation Notes
+**Argument Extraction in Tools:**
+Tool arguments arrive as `Dictionary<string, object?>` where values are `JsonElement` (from deserialization) or CLR types (from tests/direct calls). Use `DictionaryExtensions` helpers to handle both cases uniformly.
 
-- The server uses `Task.Delay(1)` in the `initialized` handler as a placeholder (src/N2.McpCore/Server/McpServer.cs:134) - this is part of the notification handling pattern
-- Tool calls and tool listing will throw `InvalidOperationException` if called before the server is initialized
-- Parameter deserialization supports both `JsonElement` and direct type parameters for flexibility
-- All MCP protocol models use record types for immutability and value equality
-- The codebase enforces strict code analysis with warnings as errors and multiple analyzers enabled
+### Reference Implementation
+
+`src/N2.McpCore.Calculator/` is the canonical example — `CalculatorServer` extends `McpServer`, overrides `GetAvailableTools()` returning `McpTool[]` with JSON Schema, and overrides `CallToolAsync()` dispatching by name. `Program.cs` shows how to wire up DI and call `RunMcpServerAsync`.
+
+## Code Analysis
+
+The library enforces strict Roslyn analysis (`AnalysisMode=All`, `CodeAnalysisTreatWarningsAsErrors=true`). Suppressed warnings are listed in `NoWarn` in the `.csproj`. New code must pass all enabled analyzers.

@@ -14,7 +14,7 @@ public class CalculatorServer : McpServer
             new McpServerInfo
             {
                 Name = "simple-calculator",
-                Version = "1.0.0"
+                Version = "1.0.1"
             },
             new McpServerCapabilities
             {
@@ -28,11 +28,12 @@ public class CalculatorServer : McpServer
 
     protected override McpTool[] GetAvailableTools()
     {
-        return new[]
-        {
+        return
+        [
             new McpTool
             {
                 Name = "add",
+                CallAsync = ExecuteAddAsync,
                 Description = "Add two numbers together",
                 InputSchema = new McpInputSchema
                 {
@@ -50,12 +51,13 @@ public class CalculatorServer : McpServer
                             Description = "Second number"
                         }
                     },
-                    Required = new[] { "a", "b" }
+                    Required = ["a", "b"]
                 }
             },
             new McpTool
             {
                 Name = "subtract",
+                CallAsync = ExecuteSubtractAsync,
                 Description = "Subtract the second number from the first number",
                 InputSchema = new McpInputSchema
                 {
@@ -73,12 +75,13 @@ public class CalculatorServer : McpServer
                             Description = "Number to subtract"
                         }
                     },
-                    Required = new[] { "a", "b" }
+                    Required = ["a", "b"]
                 }
             },
             new McpTool
             {
                 Name = "multiply",
+                CallAsync = ExecuteMultiplyAsync,
                 Description = "Multiply two numbers together",
                 InputSchema = new McpInputSchema
                 {
@@ -96,12 +99,13 @@ public class CalculatorServer : McpServer
                             Description = "Second number"
                         }
                     },
-                    Required = new[] { "a", "b" }
+                    Required = ["a", "b"]
                 }
             },
             new McpTool
             {
                 Name = "divide",
+                CallAsync = ExecuteMultiplyAsync,
                 Description = "Divide the first number by the second number",
                 InputSchema = new McpInputSchema
                 {
@@ -119,45 +123,22 @@ public class CalculatorServer : McpServer
                             Description = "Divisor (number to divide by)"
                         }
                     },
-                    Required = new[] { "a", "b" }
+                    Required = ["a", "b"]
                 }
             },
             new McpTool
             {
                 Name = "how-to-use-this-server",
+                CallAsync = GetServerInfoAsync,
                 Description = "Get information about how to use this calculator server",
                 InputSchema = new McpInputSchema
                 {
                     Type = "object",
-                    Properties = new Dictionary<string, McpPropertyDefinition>(),
-                    Required = Array.Empty<string>()
+                    Properties = [],
+                    Required = []
                 }
             }
-        };
-    }
-
-    public override async Task<McpToolCallResult> CallToolAsync(McpToolCallParams parameters)
-    {
-        return parameters.Name switch
-        {
-            "add" => await ExecuteAddAsync(parameters.Arguments),
-            "subtract" => await ExecuteSubtractAsync(parameters.Arguments),
-            "multiply" => await ExecuteMultiplyAsync(parameters.Arguments),
-            "divide" => await ExecuteDivideAsync(parameters.Arguments),
-            "how-to-use-this-server" => await GetServerInfoAsync(),
-            _ => new McpToolCallResult
-            {
-                Content = new[]
-                {
-                    new McpContent
-                    {
-                        Type = "text",
-                        Text = $"Unknown tool: {parameters.Name}"
-                    }
-                },
-                IsError = true
-            }
-        };
+        ];
     }
 
     private Task<McpToolCallResult> ExecuteAddAsync(Dictionary<string, object?> arguments)
@@ -168,14 +149,14 @@ public class CalculatorServer : McpServer
 
         return Task.FromResult(new McpToolCallResult
         {
-            Content = new[]
-            {
+            Content =
+            [
                 new McpContent
                 {
                     Type = "text",
                     Text = $"{a} + {b} = {result}"
                 }
-            }
+            ]
         });
     }
 
@@ -187,14 +168,14 @@ public class CalculatorServer : McpServer
 
         return Task.FromResult(new McpToolCallResult
         {
-            Content = new[]
-            {
+            Content =
+            [
                 new McpContent
                 {
                     Type = "text",
                     Text = $"{a} - {b} = {result}"
                 }
-            }
+            ]
         });
     }
 
@@ -206,14 +187,14 @@ public class CalculatorServer : McpServer
 
         return Task.FromResult(new McpToolCallResult
         {
-            Content = new[]
-            {
+            Content =
+            [
                 new McpContent
                 {
                     Type = "text",
                     Text = $"{a} × {b} = {result}"
                 }
-            }
+            ]
         });
     }
 
@@ -226,14 +207,14 @@ public class CalculatorServer : McpServer
         {
             return Task.FromResult(new McpToolCallResult
             {
-                Content = new[]
-                {
+                Content =
+                [
                     new McpContent
                     {
                         Type = "text",
                         Text = "Error: Division by zero is not allowed"
                     }
-                },
+                ],
                 IsError = true
             });
         }
@@ -242,18 +223,18 @@ public class CalculatorServer : McpServer
 
         return Task.FromResult(new McpToolCallResult
         {
-            Content = new[]
-            {
+            Content =
+            [
                 new McpContent
                 {
                     Type = "text",
                     Text = $"{a} ÷ {b} = {result}"
                 }
-            }
+            ]
         });
     }
 
-    private Task<McpToolCallResult> GetServerInfoAsync()
+    private Task<McpToolCallResult> GetServerInfoAsync(Dictionary<string, object?> arguments)
     {
         string info = @"# Simple Calculator MCP Server
 
@@ -301,14 +282,14 @@ To use this server with an MCP client:
 
         return Task.FromResult(new McpToolCallResult
         {
-            Content = new[]
-            {
+            Content =
+            [
                 new McpContent
                 {
                     Type = "text",
                     Text = info
                 }
-            }
+            ]
         });
     }
 

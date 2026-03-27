@@ -9,7 +9,7 @@ namespace McpCore.Server;
 /// <summary>
 /// Base implementation of MCP server
 /// </summary>
-public class McpServer : IMcpServer
+public abstract class McpServer : IMcpServer
 {
     private readonly Dictionary<string, Func<object?, Task<object>>> _methodHandlers = new();
     private readonly McpServerInfo _serverInfo;
@@ -18,7 +18,7 @@ public class McpServer : IMcpServer
 
     public bool Initialized => _initialized;
 
-    public McpServer(McpServerInfo serverInfo, McpServerCapabilities capabilities)
+    protected McpServer(McpServerInfo serverInfo, McpServerCapabilities capabilities)
     {
         _serverInfo = serverInfo;
         _capabilities = capabilities;
@@ -38,7 +38,6 @@ public class McpServer : IMcpServer
         PropertyNameCaseInsensitive = true,
         MaxDepth = 32,
     };
-
 
     public virtual async Task<JsonRpcResponse> ProcessRequestAsync(JsonRpcRequest request)
     {
@@ -109,7 +108,7 @@ public class McpServer : IMcpServer
         });
     }
 
-    public virtual Task<McpToolsListResult> GetToolsListAsync()
+    public Task<McpToolsListResult> GetToolsListAsync()
     {
         if (!_initialized)
         {
@@ -122,20 +121,33 @@ public class McpServer : IMcpServer
         });
     }
 
-    public virtual Task<McpToolCallResult> CallToolAsync(McpToolCallParams parameters)
+    public Task<McpToolCallResult> CallToolAsync(McpToolCallParams parameters)
     {
         if (!_initialized)
         {
             throw new InvalidOperationException("Server not initialized");
         }
+        if (parameters == null)
+        {
+            throw new ArgumentNullException(nameof(parameters));
+        }
+        var normalizedToolName = parameters.Name.Trim();
+        var tool = McpTools.TryGetValue(normalizedToolName, out McpTool? foundTool) ? foundTool : null;
+        if (tool == null)
+        {
+            throw new ArgumentException($"Tool '{normalizedToolName}' not found");
+        }
+        if(tool.CallAsync == null)
+        {
+            throw new InvalidOperationException($"Tool '{normalizedToolName}' is not callable");
+        }
 
-        throw new NotImplementedException("Tool call implementation must be provided by derived class");
+        return tool.CallAsync.Invoke(parameters.Arguments);
     }
 
-    protected virtual McpTool[] GetAvailableTools()
-    {
-        return Array.Empty<McpTool>();
-    }
+    private readonly Dictionary<string, McpTool> McpTools = new Dictionary<string, McpTool>(StringComparer.InvariantCultureIgnoreCase);
+
+    protected abstract McpTool[] GetAvailableTools();
 
     protected void RegisterMethodHandler(string method, Func<object?, Task<object>> handler)
     {
@@ -154,6 +166,24 @@ public class McpServer : IMcpServer
         {
             // The initialized notification is sent by the client after receiving the initialize response
             // This is part of the MCP handshake protocol
+
+            // get the available tools and put them in a dictionary
+            var tools = GetAvailableTools();
+            if(tools == null || tools.Length == 0)
+            {
+                throw new InvalidOperationException("GetAvailableTools returned null or empty array");
+            }
+            foreach(var tool in tools)
+            {
+                if(string.IsNullOrWhiteSpace(tool.Name))
+                {
+                    throw new InvalidOperationException("Tool name cannot be null or whitespace");
+                }
+                McpTools[tool.Name] = tool;
+            }
+
+            // if the class has an initializer, call it now that we know the client is fully initialized and ready to receive notifications
+
             // Mark the server as fully initialized now
             await Task.Delay(1);
 
