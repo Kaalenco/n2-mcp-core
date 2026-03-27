@@ -105,7 +105,7 @@ public class CalculatorServer : McpServer
             new McpTool
             {
                 Name = "divide",
-                CallAsync = ExecuteMultiplyAsync,
+                CallAsync = ExecuteDivideAsync,
                 Description = "Divide the first number by the second number",
                 InputSchema = new McpInputSchema
                 {
@@ -143,6 +143,7 @@ public class CalculatorServer : McpServer
 
     private Task<McpToolCallResult> ExecuteAddAsync(Dictionary<string, object?> arguments)
     {
+        ValidateNumberArguments(arguments, "a", "b");
         double a = GetNumberArgument(arguments, "a");
         double b = GetNumberArgument(arguments, "b");
         double result = a + b;
@@ -162,6 +163,7 @@ public class CalculatorServer : McpServer
 
     private Task<McpToolCallResult> ExecuteSubtractAsync(Dictionary<string, object?> arguments)
     {
+        ValidateNumberArguments(arguments, "a", "b");
         double a = GetNumberArgument(arguments, "a");
         double b = GetNumberArgument(arguments, "b");
         double result = a - b;
@@ -181,6 +183,7 @@ public class CalculatorServer : McpServer
 
     private Task<McpToolCallResult> ExecuteMultiplyAsync(Dictionary<string, object?> arguments)
     {
+        ValidateNumberArguments(arguments, "a", "b");
         double a = GetNumberArgument(arguments, "a");
         double b = GetNumberArgument(arguments, "b");
         double result = a * b;
@@ -200,6 +203,7 @@ public class CalculatorServer : McpServer
 
     private Task<McpToolCallResult> ExecuteDivideAsync(Dictionary<string, object?> arguments)
     {
+        ValidateNumberArguments(arguments, "a", "b");
         double a = GetNumberArgument(arguments, "a");
         double b = GetNumberArgument(arguments, "b");
 
@@ -277,7 +281,7 @@ To use this server with an MCP client:
 
 ## Server Information
 - Name: simple-calculator
-- Version: 1.0.0
+- Version: 1.0.1
 - Protocol: MCP 2024-11-05";
 
         return Task.FromResult(new McpToolCallResult
@@ -291,6 +295,40 @@ To use this server with an MCP client:
                 }
             ]
         });
+    }
+
+    /// <summary>
+    /// Validates that all required number arguments are present and numeric,
+    /// accumulating every problem before throwing so the caller sees all errors at once.
+    /// </summary>
+    private static void ValidateNumberArguments(Dictionary<string, object?> arguments, params string[] names)
+    {
+        var verify = VerifyResult.Start("Validating calculator arguments");
+
+        foreach (var name in names)
+        {
+            if (!arguments.TryGetValue(name, out object? value) || value == null)
+            {
+                verify.Fail($"Missing required argument: '{name}'");
+                continue;
+            }
+
+            bool isNumber = value is JsonElement el
+                ? el.ValueKind == JsonValueKind.Number
+                : value is double or float or int or long or decimal;
+
+            if (!isNumber)
+            {
+                verify.Fail($"Argument '{name}' must be a number");
+            }
+        }
+
+        if (verify.Success)
+            verify.Complete(null);
+        else
+            verify.CompleteWithFailure(null);
+
+        verify.ThrowIfFailed();
     }
 
     private static double GetNumberArgument(Dictionary<string, object?> arguments, string name)

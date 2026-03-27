@@ -7,8 +7,36 @@ using System.Text.Json.Serialization;
 namespace McpCore.Server;
 
 /// <summary>
-/// Base implementation of MCP server
+/// Base implementation of MCP server.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Initialization follows the two-phase MCP handshake:
+/// </para>
+/// <list type="number">
+///   <item>
+///     The client sends an <c>initialize</c> request. The server responds with its capabilities
+///     but does <em>not</em> yet mark itself as ready. <see cref="Initialized"/> remains
+///     <see langword="false"/>.
+///   </item>
+///   <item>
+///     The client sends a <c>notifications/initialized</c> notification to confirm it has
+///     received the capabilities. At this point the server calls <see cref="GetAvailableTools"/>,
+///     indexes all tools by name into an internal case-insensitive dictionary, and sets
+///     <see cref="Initialized"/> to <see langword="true"/>.
+///   </item>
+/// </list>
+/// <para>
+/// Only after phase 2 is complete can <c>tools/list</c> and <c>tools/call</c> be used.
+/// Both methods throw <see cref="InvalidOperationException"/> when called before the server
+/// is initialized.
+/// </para>
+/// <para>
+/// Subclasses must implement <see cref="GetAvailableTools"/> and assign a
+/// <see cref="McpTool.CallAsync"/> delegate to every tool that should be callable.
+/// The <c>CallToolAsync</c> dispatch is handled by the base class and cannot be overridden.
+/// </para>
+/// </remarks>
 public abstract class McpServer : IMcpServer
 {
     private readonly Dictionary<string, Func<object?, Task<object>>> _methodHandlers = new();

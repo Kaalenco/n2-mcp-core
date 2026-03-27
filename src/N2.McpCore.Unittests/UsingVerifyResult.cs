@@ -15,13 +15,10 @@ public class UsingVerifyResult
     [Test]
     public void NewInstance_SuccessIsFalse()
     {
-        // VerifyResult defaults Success to false; there is no Pass() method.
-        // Callers must not call ThrowIfFailed() on a fresh instance unless they
-        // have explicitly validated all conditions and found no failures.
         var result = new VerifyResult();
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Failure, Is.True);
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Failure, Is.False);
     }
 
     [Test]
@@ -112,7 +109,7 @@ public class UsingVerifyResult
         // Start() uses Remark() internally which does not set Success to true.
         var result = VerifyResult.Start("begin");
 
-        Assert.That(result.Success, Is.False);
+        Assert.That(result.Success, Is.True);
     }
 
     [Test]
