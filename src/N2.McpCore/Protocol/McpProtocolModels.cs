@@ -117,6 +117,7 @@ public record McpTool
     [JsonPropertyName("inputSchema")]
     public McpInputSchema InputSchema { get; set; } = new();
 
+    [JsonIgnore]
     public Func<Dictionary<string, object?>, Task<McpToolCallResult>>? CallAsync { get; set; }
 }
 
