@@ -409,6 +409,14 @@ private async Task<string> HandleYourToolAsync(Dictionary<string, object?> argum
 }
 ```
 
+## Changelog
+
+### 1.1.1
+- Fixed: `McpTool.CallAsync` is now decorated with `[JsonIgnore]` so that `tools/list` responses serialize correctly. Previously the `Func<>` delegate caused a `NotSupportedException` at runtime when the JSON serializer encountered the property.
+
+### 1.1.0
+- Initial public release.
+
 ## Support and Resources
 
 - [MCP Specification](https://modelcontextprotocol.io/)

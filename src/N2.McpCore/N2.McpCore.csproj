@@ -19,15 +19,15 @@
 		<RootNamespace>N2.McpCore</RootNamespace>
 		<ProductName>N2 Mcp Core Libraries</ProductName>
 
-		<Version>1.1.0</Version>
-		<ProductVersion>1.1.0</ProductVersion>
+		<Version>1.1.1</Version>
+		<ProductVersion>1.1.1</ProductVersion>
 
 		<!-- Package information -->
 		<PackageId>N2.Mcp.Core</PackageId>
 		<PackageType>Dependency</PackageType>
 		<PackageLicenseExpression>AFL-3.0</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/kaalenco/n2-mcp-core</PackageProjectUrl>
-    <PackageVersion>1.1.0</PackageVersion>
+    <PackageVersion>1.1.1</PackageVersion>
 
 		<!-- Source Link -->
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
