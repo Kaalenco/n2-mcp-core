@@ -67,17 +67,16 @@ public class UsingMcpServer
     [Test]
     public async Task GetToolsListAsync_BeforeInitialization_ThrowsInvalidOperationException()
     {
-        Assert.ThrowsAsync<InvalidOperationException>(() => _server.GetToolsListAsync());
-        await Task.CompletedTask;
+        await Assert.ThatAsync(() => _server.GetToolsListAsync(), Throws.TypeOf<InvalidOperationException>());
     }
 
     [Test]
     public async Task CallToolAsync_BeforeInitialization_ThrowsInvalidOperationException()
     {
         var server = new TestMcpServer();
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
-            server.CallToolAsync(new McpToolCallParams { Name = "echo" }));
-        await Task.CompletedTask;
+        await Assert.ThatAsync(
+            () => server.CallToolAsync(new McpToolCallParams { Name = "echo" }),
+            Throws.TypeOf<InvalidOperationException>());
     }
 
     // ── ProcessRequestAsync null guard ───────────────────────────────────────
@@ -85,8 +84,7 @@ public class UsingMcpServer
     [Test]
     public async Task ProcessRequestAsync_NullRequest_ThrowsArgumentNullException()
     {
-        Assert.ThrowsAsync<ArgumentNullException>(() => _server.ProcessRequestAsync(null!));
-        await Task.CompletedTask;
+        await Assert.ThatAsync(() => _server.ProcessRequestAsync(null!), Throws.TypeOf<ArgumentNullException>());
     }
 
     // ── Unknown method ────────────────────────────────────────────────────────
