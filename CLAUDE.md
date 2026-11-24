@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-N2.McpCore is a .NET library that provides core abstractions and utilities for implementing MCP (Model Context Protocol) servers. The package targets `netstandard2.0`, `netstandard2.1`, `net8.0`, and `net10.0`.
+N2.McpCore is a .NET library that provides core abstractions and utilities for implementing MCP (Model Context Protocol) servers. The package targets `netstandard2.0`, `net10.0`, and `net11.0`.
 
 ## Build and Development Commands
 
@@ -15,7 +15,7 @@ dotnet build src/N2.McpCore.sln
 # Build for specific configuration
 dotnet build src/N2.McpCore.sln -c Release
 
-# Run tests (NUnit, targets net8.0 and net10.0)
+# Run tests (NUnit, targets net10.0 and net11.0)
 dotnet test src/N2.McpCore.Unittests/N2.McpCore.Unittests.csproj
 
 # Run a single test
